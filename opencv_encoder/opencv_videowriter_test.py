@@ -1,6 +1,14 @@
 import cv2
 import os
 
+class video_slice:
+    mImage = []
+ 
+    # 초기자(initializer)
+    def __init__(self, images, start, end):
+        for i in range(start, end):
+            self.mImage.append(images[i]);
+
 def make_video(images, outimg=None, fps=20, size=None, is_color=True, format="MJPG", outvid='image_video.avi'):
         from cv2 import VideoWriter, VideoWriter_fourcc, imread, resize
         fourcc = VideoWriter_fourcc(*format)
