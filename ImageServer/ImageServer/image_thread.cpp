@@ -950,8 +950,6 @@ void ConvertIQDataImageAndVideo(string output_image_path, string output_video_pa
 	float total_elapsed_time = 0.0f;
 	float compute_time;
 	cv::VideoWriter video_test(output_video_path.c_str(), cv::VideoWriter::fourcc('8', 'B', 'P', 'S'), 10.0, cv::Size(WIDTH, HEIGHT), false);
-	video_test.set(
-	)
 
 	fprintf(stdout, "Processing");
 
