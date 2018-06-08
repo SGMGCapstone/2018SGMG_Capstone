@@ -136,6 +136,7 @@ int main()
 	DWORD broadcast_thread_id, image_processing_thread_id;
 
 	WSAStartup(MAKEWORD(2, 2), &wsaData);
+	init();
 
 	// socket »ý¼º
 	socket_descriptor = socket(AF_INET, SOCK_DGRAM, 0);
