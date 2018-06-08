@@ -839,7 +839,9 @@ void save_iq_data_to_jpeg_image(const char *iq_data, const char *filename, cv::V
 	compression_params.push_back(CV_IMWRITE_PAM_FORMAT_GRAYSCALE);
 	imwrite(filename, mat, compression_params);
 
-	video_test.write(mat);
+	cv::Mat out = cv::imread(filename, 0);
+
+	video_test.write(out);
 
 	//cv::Mat out;
 	//cv::cvtColor(mat, out, CV_GRAY2BGR);
@@ -949,7 +951,7 @@ void ConvertIQDataImageAndVideo(string output_image_path, string output_video_pa
 	int i;
 	float total_elapsed_time = 0.0f;
 	float compute_time;
-	cv::VideoWriter video_test(output_video_path.c_str(), cv::VideoWriter::fourcc('8', 'B', 'P', 'S'), 10.0, cv::Size(WIDTH, HEIGHT), false);
+	cv::VideoWriter video_test(output_video_path.c_str(), cv::VideoWriter::fourcc('M', 'P', 'E', 'G'), 10.0, cv::Size(WIDTH, HEIGHT), false);
 
 	fprintf(stdout, "Processing");
 
@@ -988,7 +990,7 @@ void ConvertIQDataToVideo(string output_image_path, string output_video_path, SO
 	int temp;
 	int frame_number = 0;
 	char file_name_buffer[MAX_PATH];
-	cv::VideoWriter video_test(output_video_path.c_str(), CV_FOURCC('M', 'J', 'P', 'G'), 10.0, cv::Size(WIDTH, HEIGHT), false);
+	cv::VideoWriter video_test(output_video_path.c_str(), cv::VideoWriter::fourcc('M', 'P', 'E', 'G'), 10.0, cv::Size(WIDTH, HEIGHT), false);
 
 	while (isSocketConnect)
 	{
