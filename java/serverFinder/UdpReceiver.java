@@ -9,6 +9,10 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.Date;
+import java.util.Locale;
 
 import lch.properties.PropertyManager;
 
@@ -16,14 +20,28 @@ public class UdpReceiver extends Thread
 {
 	private static final String TAG = "SC1_UDP_RECEIVER";
 	private static final int MAGIC = 0x20121632;
-	
+
 	@Override
 	public void run()
 	{
-		int recvData;
-		byte buffer[] = new byte[4];
-		DatagramPacket packet = new DatagramPacket(buffer, 4);
+		byte buffer[] = new byte[24];
+		DatagramPacket packet = new DatagramPacket(buffer, 24);
 		DatagramSocket datagramSocket = null;
+		Date pickedCheckTime = new Date();
+		Date curCheckTime;
+
+		// 서순
+		// magic
+		// cpu core count
+		// cpu clock
+		// cpu usage
+		int magic;
+		int cpu_core_count;
+		double cpu_clock;
+		double cpu_usage;
+
+		double picked_score = 0.0;
+		double cur_score;
 
 		try
 		{
@@ -46,7 +64,7 @@ public class UdpReceiver extends Thread
 			{
 				datagramSocket.receive(packet);
 			}
-			catch(SocketTimeoutException ex)
+			catch (SocketTimeoutException ex)
 			{
 				Log.d(TAG, "timeout!!");
 				continue;
@@ -56,21 +74,50 @@ public class UdpReceiver extends Thread
 				ex.printStackTrace();
 			}
 
-			if(packet.getLength() != 4)
+			curCheckTime = new Date();
+			if(curCheckTime.getTime() - pickedCheckTime.getTime() > 1000 * 30)
+			{
+				picked_score = 0.0;
+			}
+
+			if (packet.getLength() != 24)
 			{
 				// something wrong...
-				Log.e(TAG, "packet length isn't 4 bytes");
+				Log.e(TAG, "packet length isn't 24 bytes - length : " + packet.getLength());
 			}
 			else
 			{
-				recvData = ((buffer[3] & 0xff) << 24) | ((buffer[2] & 0xff) << 16)
-						| ((buffer[1] & 0xff) << 8) | (buffer[0] & 0xff);
+				magic = ByteBuffer.wrap(buffer, 0, 4).order(ByteOrder.LITTLE_ENDIAN).getInt();
 
-				Log.d(TAG, String.format("recv data : 0x%X", recvData));
-
-				if(recvData == MAGIC)
+				if (magic == MAGIC)
 				{
-					PropertyManager.getInstance().VideoEncodingServerIP.set(packet.getAddress().getHostAddress());
+					cpu_core_count = ByteBuffer.wrap(buffer,
+													 4,
+													 4).order(ByteOrder.LITTLE_ENDIAN).getInt();
+					cpu_clock = ByteBuffer.wrap(buffer,
+												8,
+												8).order(ByteOrder.LITTLE_ENDIAN).getDouble();
+					cpu_usage = ByteBuffer.wrap(buffer,
+												16,
+												8).order(ByteOrder.LITTLE_ENDIAN).getDouble();
+
+					cur_score = cpu_clock * cpu_core_count * (1.0 - cpu_usage / 100.0);
+					if(cur_score > picked_score)
+					{
+						picked_score = cur_score;
+						pickedCheckTime = curCheckTime;
+
+						PropertyManager.getInstance().VideoEncodingServerIP.set(packet.getAddress().getHostAddress());
+					}
+
+					Log.d(TAG,
+						  String.format(Locale.getDefault(),
+										"cur_pick : %s / recv ip : %s / cpu_core_count : %d / cpu_clock : %f / cpu_usage : %f",
+										PropertyManager.getInstance().VideoEncodingServerIP.get(),
+										packet.getAddress().getHostAddress(),
+										cpu_core_count,
+										cpu_clock,
+										cpu_usage));
 				}
 			}
 		}
